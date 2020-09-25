@@ -105,6 +105,32 @@ extension RTree {
 }
 
 extension RTree {
+
+    /// Finds the all elements whose envelope intersects with a given envelope. `nil` if tree is empty.
+    /// Touching envelopes as well as fully contained envelopes are also included.
+    public mutating func locateInEnvelopeIntersectingIterator(_ envelope: BoundingRectangle<T.Point>) throws -> LocateInEnvelopeIntersecting<T> {
+        if self.root == nil {
+            try self.load()
+        }
+
+        return LocateInEnvelopeIntersecting(root: root!, envelope: envelope)
+    }
+
+    /// Finds the all elements whose envelope intersects with a given envelope. `nil` if tree is empty.
+    /// Touching envelopes as well as fully contained envelopes are also included.
+    public mutating func locateInEnvelopeIntersecting(_ envelope: BoundingRectangle<T.Point>) throws -> [T] {
+
+        var iterator: LocateInEnvelopeIntersecting<T> = try locateInEnvelopeIntersectingIterator(envelope)
+        var result = [T]()
+        while let next = iterator.next() {
+            result.append(next)
+        }
+
+        return result
+    }
+}
+
+extension RTree {
     /// Finds the nearest neighbor to the given point. `nil` if tree is empty.
     public mutating func nearestNeighbor(_ queryPoint: T.Point) throws -> T? {
         if self.root == nil {

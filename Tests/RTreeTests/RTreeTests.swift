@@ -83,6 +83,29 @@ extension Element: Equatable {
     
 }
 
+struct Rectangle: SpatialObject {
+    typealias Point = Point2D
+
+    private let boundingRectangle: BoundingRectangle<Point>
+
+    init(lower: Point, upper: Point) {
+        self.boundingRectangle = BoundingRectangle(lower: lower, upper: upper)
+    }
+
+    var lower: Point { boundingRectangle.lower }
+    var upper: Point { boundingRectangle.upper }
+
+    func minimumBoundingRectangle() -> BoundingRectangle<Point2D> {
+        boundingRectangle
+    }
+
+    func distanceSquared(point: Point2D) -> Double {
+        boundingRectangle.distanceSquared(point: point)
+    }
+}
+
+extension Rectangle: Equatable {}
+
 @available(OSX 10.12, *)
 final class RTreeTests: XCTestCase {
     func testInit() throws {
@@ -141,6 +164,36 @@ final class RTreeTests: XCTestCase {
         
         try? FileManager.default.removeItem(at: path)
         
+    }
+
+    func testLocateInEnvelopeIntersecting() throws {
+        var path = FileManager.default.temporaryDirectory
+        path.appendPathComponent("testRTreeLocateInEnvelopeIntersecting.db")
+
+        var tree = try RTree<Rectangle>(path: path)
+
+        let leftPiece = Rectangle(lower: Point2D(x: 0.0, y: 0.0), upper: Point2D(x: 0.4, y: 1.0))
+        let rightPiece = Rectangle(lower: Point2D(x: 0.6, y: 0.0), upper: Point2D(x: 1.0, y: 1.0))
+        let middlePiece = Rectangle(lower: Point2D(x: 0.25, y: 0.0), upper: Point2D(x: 0.75, y: 1.0))
+
+        try tree.insert(leftPiece)
+        try tree.insert(rightPiece)
+        try tree.insert(middlePiece)
+
+        let elementsIntersectingLeftPiece = try tree.locateInEnvelopeIntersecting(leftPiece.minimumBoundingRectangle())
+        //The left piece should not intersect the right piece!
+        XCTAssertEqual(elementsIntersectingLeftPiece.count, 2)
+
+        let elementsIntersectingMiddle = try tree.locateInEnvelopeIntersecting(middlePiece.minimumBoundingRectangle())
+        // Only the middle piece intersects all pieces within the tree
+        XCTAssertEqual(elementsIntersectingMiddle.count, 3)
+
+        let largePiece = BoundingRectangle(lower: Point2D(x: -100, y: -100), upper: Point2D(x: 100, y: 100))
+        let elementsIntersectingLargePiece = try tree.locateInEnvelopeIntersecting(largePiece)
+        // Any element that is fully contained should also be returned
+        XCTAssertEqual(elementsIntersectingLargePiece.count, 3)
+
+        try? FileManager.default.removeItem(at: path)
     }
     
 }
