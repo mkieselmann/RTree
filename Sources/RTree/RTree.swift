@@ -31,25 +31,30 @@ where
     
     public init(path: URL, readOnly: Bool = false) throws {
         let storage = try Storage<T>(path: path, readOnly: readOnly)
-        
-        if storage.isEmpty() {
-            if readOnly {
-                throw RTreeError.treeMarkedReadOnly
-                
-            }
-            
-            self.path = path
-            self.storage = storage
-            self.root = DirectoryNodeData(storage: storage)
-            self.isReadOnly = readOnly
-            
-            try self.save()
-            
-        } else {
-            self = try storage.loadRoot()
-            self.isReadOnly = readOnly
-            
-        }
+
+        self.path = path
+        self.storage = storage
+        self.root = DirectoryNodeData(storage: storage)
+        self.isReadOnly = readOnly
+
+//        if storage.isEmpty() {
+//            if readOnly {
+//                throw RTreeError.treeMarkedReadOnly
+//
+//            }
+//
+//            self.path = path
+//            self.storage = storage
+//            self.root = DirectoryNodeData(storage: storage)
+//            self.isReadOnly = readOnly
+//
+//            try self.save()
+//
+//        } else {
+//            self = try storage.loadRoot()
+//            self.isReadOnly = readOnly
+//
+//        }
         
     }
     
@@ -98,7 +103,7 @@ extension RTree {
         
         self.size += 1
         
-        try self.save()
+//        try self.save()
         
     }
     
